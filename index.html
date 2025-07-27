@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pica Image Resizer with Preview</title>
+  <title>Pica Image Resizer with Details</title>
   <script src="https://unpkg.com/pica@8.0.0/dist/pica.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -17,6 +17,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      max-width: 300px;
     }
     canvas, img {
       max-width: 100%;
@@ -26,11 +27,17 @@
       margin-top: 8px;
       font-weight: bold;
     }
+    .details {
+      margin-top: 4px;
+      font-size: 0.9em;
+      color: #555;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
-  <h2>🖼️ Pica Image Resizer</h2>
+  <h2>🖼️ Pica Image Resizer with Details</h2>
 
   <label>Select image:</label>
   <input type="file" id="fileInput" accept="image/*" />
@@ -42,10 +49,12 @@
     <div class="preview">
       <span class="label">Original Image</span>
       <img id="originalPreview" />
+      <div id="originalDetails" class="details"></div>
     </div>
     <div class="preview">
       <span class="label">Resized Image</span>
       <canvas id="canvas"></canvas>
+      <div id="resizedDetails" class="details"></div>
     </div>
   </div>
 
@@ -57,7 +66,14 @@
     const canvas = document.getElementById("canvas");
     const download = document.getElementById("download");
     const originalPreview = document.getElementById("originalPreview");
+    const originalDetails = document.getElementById("originalDetails");
+    const resizedDetails = document.getElementById("resizedDetails");
     const picaInstance = pica();
+
+    // Helper to format bytes to KB with two decimals
+    function formatKB(bytes) {
+      return (bytes / 1024).toFixed(2) + " KB";
+    }
 
     fileInput.addEventListener("change", async () => {
       const file = fileInput.files[0];
@@ -71,8 +87,11 @@
 
       const img = new Image();
       img.onload = async () => {
+        // Show original image + details
         originalPreview.src = img.src;
+        originalDetails.textContent = `Dimensions: ${img.width} × ${img.height} px | Size: ${formatKB(file.size)}`;
 
+        // Resize logic
         const height = Math.round(img.height * (width / img.width));
         const offscreenCanvas = document.createElement("canvas");
         offscreenCanvas.width = width;
@@ -85,10 +104,13 @@
         const ctx = canvas.getContext("2d");
         ctx.drawImage(offscreenCanvas, 0, 0);
 
+        // Create blob for download + size info
         canvas.toBlob(blob => {
           const url = URL.createObjectURL(blob);
           download.href = url;
           download.style.display = "inline";
+
+          resizedDetails.textContent = `Dimensions: ${width} × ${height} px | Size: ${formatKB(blob.size)}`;
         }, "image/png");
       };
 
